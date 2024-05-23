@@ -1,6 +1,6 @@
 <template>
   <div style="margin-top: 40px">
-    <el-form :model="form" label-width="20px" class="form">
+    <el-form :model="formData" label-width="20px" class="form">
       <!--账号-->
       <el-form-item style="margin-top: 6px">
         <el-row type="flex" align="middle">
@@ -10,7 +10,7 @@
             </div>
           </el-col>
           <el-col :span="22">
-            <el-input v-model="form.username" maxlength="20" @keyup.enter.native="loginDone('form')"
+            <el-input v-model="formData.username" maxlength="20" @keyup.enter.native="login(false)"
               style="width: 250px" clearable autofocus placeholder="请输入账号"></el-input>
           </el-col>
         </el-row>
@@ -24,14 +24,14 @@
             </div>
           </el-col>
           <el-col :span="22">
-            <el-input type="password" @keyup.enter.native="loginDone('form')" v-model="form.password" maxlength="30"
+            <el-input type="password" @keyup.enter.native="login(false)" v-model="formData.password" maxlength="30"
               style="width: 250px" clearable placeholder="请输入密码" show-password></el-input>
           </el-col>
         </el-row>
       </el-form-item>
 
       <el-form-item>
-        <Verify v-bind:ref="verify" style="margin-left: 50px;"></Verify>
+        <Verify ref="verify" style="margin-left: 50px;"></Verify>
       </el-form-item>
 
       <el-row>
@@ -46,20 +46,12 @@
 
 
       <el-form-item>
-        <el-button v-if="loadingBtn === ''" type="primary" @click="login('form')" class="loginMain"
-          :disabled="loginBtn">
+        <el-button type="primary" @click="login(false)" class="loginMain">
           <span> 登录 </span>
         </el-button>
-        <el-button v-else @click="login('form')" type="primary" class="loginMain" :disabled="loginBtn">
-          {{ loadingBtn }}
-        </el-button>
 
-        <el-button v-if="loadingBtn === ''" type="warning" @click="login('form')" class="loginMain"
-          :disabled="loginBtn">
+        <el-button type="warning" @click="login(true)" class="loginMain">
           <span> 注册 </span>
-        </el-button>
-        <el-button v-else @click="login('form')" type="warning" class="loginMain" :disabled="loginBtn">
-          {{ loadingBtn }}
         </el-button>
       </el-form-item>
     </el-form>
@@ -67,103 +59,100 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { defineExpose,ref, provide, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import Verify from "./verify.vue";
 import { User, Lock } from '@element-plus/icons-vue'
-let form = reactive({
+const formData = ref({
   username: "",
   password: "",
   role: "user",
 });
 
 const verify=ref(null);
-
 let loadingBtn = ref("");
-let circleArr = ref(["", "", "", "", "", ""]);
-let isKeep = ref(true);
-let errNum = ref(0);
-let loginState = ref(0);
-let time = ref("");
-let loginBtn = ref(false);
-let dealCookie = ref([]);
-const isRegister = ref(false);  //标记是否为注册
+let isKeep = ref(true); //记住密码
+let loginState = ref(0);  //是否登录
 
-const clearForm = (role) => {
-  form = reactive({
-    username: "",
-    password: "",
-    role,
-  });
+
+//const isRegister = ref(false);  //标记是否为注册
+
+const clearForm = (curRole) => {
+  formData.value = {
+    username: '',
+    password: '',
+    role: curRole
+  };
 };
 
-const clickCookies = (data) => {
-  form = reactive({
+const clickCookies = (data) => {   //记住密码后，把密码放到form中去
+  formData.value = {
     username: data.username,
     password: data.password,
     role: data.role,
-  });
+  };
 };
 
-const loginDone = (formName) => {
-  if (!loginBtn.value) {
-    login(formName);
-  }
-};
+//在登录函数使用store把登录成功返回的token存储起来
+import { useTokenStore } from '@/stores/token.js';
+//登录的数据类型公共注册的，表单校验rules也共用rules的
+//登录函数login
+import { userRegisterService, userLoginService } from '@/api/user.js';
+import {useRouter} from 'vue-router';
+const router = useRouter();
+const tokenStore = useTokenStore();
 
-const login = (formName) => {
-  if (!verify.value.check()) {  //formRef.value.verify != undefined && 不知道含义
+
+const login = async (isRegister) => {   //根据点击的按钮来判断是注册还是登录
+  if (verify.value != undefined && !verify.value.check()) {  //formRef.value.verify != undefined && 不知道含义
     ElMessage.warning({
       message: "验证码错误",
     });
     return;
   }
-  if (form.username === "") {
+  if (formData.value.username === "") {
     ElMessage.warning({
       message: "账号不能为空",
     });
-  } else if (form.password === "") {
+    return;
+  } else if (formData.value.password === "") {
     ElMessage.warning({
       message: "密码不能为空",
     });
-  } else {
-    loginState.value++;
-    if (loginState.value === 1) {
-      checkLogin(formName);
-    }
+    return;
   }
-};
-
-const checkLogin = async () => {
-  const valid = await formRef.value.validate();
-  if (valid) {
-    loadingBtn.value = "登录中 ...";
-    loginBtn.value = true;
-    await nextTick(() => {
-      // Your axios call here
-    });
+  //登录逻辑/注册逻辑
+  if(!isRegister){
+    // console.log(formData);
+    let result = await userLoginService(formData.value);
+    ElMessage.success(result.message!='操作成功'? result.message: '登录成功');
+    //把得到的token存储到pinia中
+    tokenStore.setToken(result.data);
+    //跳转到首页，借助路由跳转
+    router.push('/');
   }
-}
+  else{ //注册逻辑
+    let result = await userRegisterService(formData.value);
+    ElMessage.success(result.message!='操作成功'? result.message: '注册成功');
+    // console.log(result.data);
+    let resultLogin = await userLoginService(formData.value);
+    ElMessage.success(resultLogin.message!='操作成功'? resultLogin.message: '注册登录成功');
+    //把得到的token存储到pinia中
+    tokenStore.setToken(result.data);
+    //跳转到首页，借助路由跳转
+    router.push('/');
+  }
 
-const click = (_this, data) => {
-  // Your logic here
 };
 
-const errDone = () => {
-  // Your logic here
-};
 
-const getCookies = () => {
-  // Your logic here
-};
+// provide('clearForm', clearForm);
+onMounted(() => {   //开始时重置form表单
+  clearForm("user");
+});
 
-const deleteCookies = (data) => {
-  // Your logic here
-};
-
-onMounted(() => {
-  getCookies();
-  clearForm(2);
+defineExpose({    //把函数暴露给外界使用
+  clearForm,
 });
 </script>
 

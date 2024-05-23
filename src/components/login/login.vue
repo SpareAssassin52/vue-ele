@@ -1,9 +1,17 @@
 <script setup>
 import Form from './form.vue';
-import { ref } from 'vue';
+import { nextTick,inject, onMounted, ref } from 'vue';
 
-//const keyLabel = ref("用户");
+const keyLabel = ref("用户");
 
+const user_tab=ref(null);
+const expert_tab=ref(null);
+const admin_tab=ref(null);
+
+// let clearForm=null; //获取Form中的函数
+// onMounted(() => {
+//   clearForm = inject('clearForm');
+// });
 const flip = () => {
   //keyLabel.value=newLabel;
   let flip = document.querySelector(".el-tabs");
@@ -16,21 +24,30 @@ const flip = () => {
   }, 240);
 }
 
-const tabClick = (data) => {
-  //if (data.label !== keyLabel.value)
-  flip();
+const tabClick = (tab) => {
+  // console.log(tab);
+  // console.log(tab.props.label); 
+  if (tab.props.label !== keyLabel.value){
+    flip();
+    keyLabel.value=tab.props.label;
+  }
 
-  if (data.label === "用户") {
+  nextTick(()=>{
+    if (tab.props.label === "用户") {
     user_tab.value.clearForm("user");
     //user_tab.value.getCook
   }
-  else if (data.label === "专家") {
+  else if (tab.props.label === "专家") {
     expert_tab.value.clearForm("expert");
   }
-  else if (data.label === "管理员") {
+  else if (tab.props.label === "管理员") {
     admin_tab.value.clearForm("admin");
   }
+  });
+  
 }
+
+
 </script>
 <template>
   <div id="app" class="center">

@@ -17,6 +17,8 @@ import router from '@/router';
 //const router = useRouter();
 instance.interceptors.request.use(
     (config)=>{
+        // console.log(`请求链接: ${config.url}`);
+        // console.log(`请求参数: ${JSON.stringify(config.params)}`);
         //请求前的回调
         //添加token
         const tokenStore = useTokenStore();
