@@ -106,7 +106,7 @@ if (command === 'logout') {
                         <el-icon>
                             <TrendCharts />
                         </el-icon>
-                        <span>课题申请表统计数据</span>
+                        <span>统计数据一览</span>
                     </el-menu-item>
                     <el-menu-item index="/topics/printPDF">
                         <el-icon><Document /></el-icon>

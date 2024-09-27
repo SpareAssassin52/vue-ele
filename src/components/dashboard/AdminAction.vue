@@ -67,7 +67,7 @@ adminActionList();
     <el-card class="page-container">
         <template #header>
             <div class="header" style="font-size: 16pt">
-                <span>课题审核通过公告</span>
+                <span>管理员操作公布</span>
                 <!-- <div class="extra">
                     <el-button type="primary"
                         @click="dialogVisible = true; title = '添加批次'; clearData()">添加批次</el-button>

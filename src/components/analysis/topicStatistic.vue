@@ -37,7 +37,7 @@ getData();
   <el-card class="page-container">
     <template #header>
       <div class="header" style=";font-size: 16pt;">
-        <span>课题申请统计一览</span>
+        <span>统计数据一览</span>
       </div>
     </template>
 
