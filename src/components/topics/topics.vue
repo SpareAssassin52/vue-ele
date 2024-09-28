@@ -397,10 +397,10 @@ const clearSearch = () => {
     <el-card class="page-container">
         <template #header>
             <div class="header" style="font-size: 16pt">
-                <span>文章管理</span>
+                <span>课题管理</span>
                 <div class="extra">
                     <el-button type="primary"
-                        @click="visibleDrawer = true; drawertitle = '添加课题申请'; clearDrawer();">添加文章</el-button>
+                        @click="visibleDrawer = true; drawertitle = '添加课题申请'; clearDrawer();">添加课题</el-button>
                 </div>
             </div>
         </template>
